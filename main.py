@@ -20,14 +20,12 @@ if __name__ == '__main__':
         print(f"Set Config Failed: {e}")
         exit(1)
 
-    # Init object of MQ
+    # Init MQ
     ai_mq = MQ(HOST, PORT, USER, PASSWORD, QUEUE, ROUTING_KEY, EXCHANGE)
-
     # Test - send
-    msg = json.dumps({"TIME": time.strftime("%Y-%m-%d %H:%M:%S", time.localtime()),
-                      "TYPE": "FILE/.cap", "DATA": "TEST"})
+    msg = json.dumps(
+        {"TIME": time.strftime("%Y-%m-%d %H:%M:%S", time.localtime()), "TYPE": "Str/Json", "DATA": "TEST - Message"})
     ai_mq.send(msg)
-
     # Run
     try:
         ai_mq.rece()

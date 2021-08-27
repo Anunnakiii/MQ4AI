@@ -31,15 +31,15 @@ class MQ:
             print(e)
             exit(1)
 
-    def callback(ch, method, properties, body):
-        print(f"Received {body}")
-        data = json.loads(body)
-        print(type(data), data)
+    def callback(self, ch, method, properties, body):
+        print(f"Received: {body.decode()}")
+        # data = json.loads(body)
+        # print(type(data), data)
         # TODO   Save data/message to local file first or call Kitsune directly
 
     def send(self, m_body):
         if self.is_connected:
-            print(f"Message: {m_body}")
+            print(f"Message Sent: {m_body}")
             self.channel.basic_publish(exchange=self.exchange, routing_key=self.routing_key, body=m_body,
                                        properties=pika.BasicProperties(delivery_mode=2, ))
 
