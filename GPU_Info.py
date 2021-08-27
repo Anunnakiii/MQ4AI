@@ -26,16 +26,12 @@ class GPU_Info():
         handle = pynvml.nvmlDeviceGetHandleByIndex(index)
         meminfo = pynvml.nvmlDeviceGetMemoryInfo(handle)
         gpu_name = pynvml.nvmlDeviceGetName(handle)
-        print('Decive: {0}, {1}, 可用显存: {2}, 已用显存: {3}, 总显存: {4}'.format(index, gpu_name, meminfo.free / 1024 ** 2,
-                                                                        meminfo.used / 1024 ** 2,
-                                                                        meminfo.total / 1024 ** 2))
+        print(f'Decive: {index}, {gpu_name}, \
+                可用显存: {meminfo.free / 1024 ** 2}, \
+                已用显存: {meminfo.used / 1024 ** 2}, \
+                总显存: {meminfo.total / 1024 ** 2}')
         return index, gpu_name, meminfo.free / 1024 ** 2, meminfo.used / 1024 ** 2, meminfo.total / 1024 ** 2
 
     def start(self):  # 创建线程
         gpu_info_thread = Thread(target=self.gpu_info)
         gpu_info_thread.start()  # 启动线程
-
-
-if __name__ == '__main__':
-    gpu = GPU_Info()
-    gpu.start()
