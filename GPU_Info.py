@@ -6,21 +6,29 @@
     Date:              2021/8/27
     Description:       获取显卡状态
 ------------------------------------------------
+    修改记录：
+    Author:            BoiWong
+    Date:              2021/8/27
+    Description:       1.重构部分代码
+                       2.实时发送GPU信息到消息队列
+------------------------------------------------
 '''
 
+from MQ_Manager import MQ
 from threading import Thread
 import pynvml
 
 
 class GPU_Info():
-    def __init__(self):
+    def __init__(self, gpu_mq: MQ):
+        self.gpu_mq = gpu_mq
         pynvml.nvmlInit()
         self.deviceCount = pynvml.nvmlDeviceGetCount()  # 几块显卡
 
     def gpu_info(self):
         while True:
             for i in range(self.deviceCount):
-                self.get_gpu_state(i)
+                self.gpu_mq.send(self.get_gpu_state(i))
 
     def get_gpu_state(self, index):
         handle = pynvml.nvmlDeviceGetHandleByIndex(index)
