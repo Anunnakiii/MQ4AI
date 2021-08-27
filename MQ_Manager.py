@@ -6,18 +6,19 @@
     Description:       消息队列模块, 负责 接收/发送 数据(使用RabbitMQ实现)
 ------------------------------------------------
 """
-import json
+
 import pika
 
 
 class MQ:
-    def __init__(self, m_host, m_port, m_user, m_password, m_queue, m_routing_key, m_exchange=""):
+    def __init__(self, m_host, m_port, m_user, m_password, m_queue, m_routing_key, m_exchange="", m_r_queue=None):
         self.host = m_host
         self.port = m_port
         self.user = m_user
         self.password = m_password
         self.exchange = m_exchange
         self.queue = m_queue
+        self.r_queue = m_r_queue
         self.routing_key = m_routing_key
         self.is_connected = False
         try:
@@ -32,18 +33,20 @@ class MQ:
             exit(1)
 
     def callback(self, ch, method, properties, body):
-        print(f"Received: {body.decode()}")
+        print(f"From: {self.r_queue} Received: {body.decode()}")
         # data = json.loads(body)
         # print(type(data), data)
         # TODO   Save data/message to local file first or call Kitsune directly
 
     def send(self, m_body):
         if self.is_connected:
-            print(f"Message Sent: {m_body}")
+            print(f"Send to: {self.queue} Message : {m_body}")
             self.channel.basic_publish(exchange=self.exchange, routing_key=self.routing_key, body=m_body,
                                        properties=pika.BasicProperties(delivery_mode=2, ))
 
-    def rece(self):
-        if self.is_connected:
-            self.channel.basic_consume(queue="ai", on_message_callback=self.callback, auto_ack=True)
+    def rece(self, rec_queue):
+        if self.r_queue is None:
+            self.r_queue = rec_queue
+        if self.is_connected and self.r_queue != None:
+            self.channel.basic_consume(queue=self.r_queue, on_message_callback=self.callback, auto_ack=True)
             self.channel.start_consuming()

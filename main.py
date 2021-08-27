@@ -1,6 +1,7 @@
 import json
 import time
 from MQ_Manager import MQ
+from GPU_Info import GPU_Info
 
 if __name__ == '__main__':
     # Load config file
@@ -22,13 +23,16 @@ if __name__ == '__main__':
 
     # Init MQ
     ai_mq = MQ(HOST, PORT, USER, PASSWORD, QUEUE, ROUTING_KEY, EXCHANGE)
+    gpu_mq = MQ(HOST, PORT, USER, PASSWORD, "gpu", "gpu", EXCHANGE)
+    gpu_info = GPU_Info(gpu_mq)
+    gpu_info.start()
     # Test - send
     msg = json.dumps(
         {"TIME": time.strftime("%Y-%m-%d %H:%M:%S", time.localtime()), "TYPE": "Str/Json", "DATA": "TEST - Message"})
     ai_mq.send(msg)
     # Run
     try:
-        ai_mq.rece()
+        ai_mq.rece("ai")
     except KeyboardInterrupt as ki:
         print("Exit")
         exit(1)
