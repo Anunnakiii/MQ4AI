@@ -127,4 +127,5 @@ dmypy.json
 
 # Pyre type checker
 .pyre/
-/CONFIG.json
+/GPU_CONFIG.json
+/AI_CONFIG.json

@@ -15,6 +15,7 @@
 """
 
 import json
+import time
 from MQ_Manager import MQ
 from threading import Thread
 import pynvml
@@ -24,7 +25,7 @@ class GPU_Info():
     def __init__(self, gpu_mq: MQ):
         self.gpu_mq = gpu_mq
         pynvml.nvmlInit()
-        self.deviceCount = pynvml.nvmlDeviceGetCount()  # 几块显卡
+        self.deviceCount = pynvml.nvmlDeviceGetCount()
 
     def gpu_info(self):
         while True:
@@ -33,16 +34,17 @@ class GPU_Info():
                 gpu_index = f"GPU{i}"
                 gpus_info[gpu_index] = self.get_gpu_state(i)
             self.gpu_mq.send(json.dumps(gpus_info))
+            time.sleep(1)
 
     def get_gpu_state(self, index):
         gpu_info = dict()
         handle = pynvml.nvmlDeviceGetHandleByIndex(index)
         meminfo = pynvml.nvmlDeviceGetMemoryInfo(handle)
         gpu_name = pynvml.nvmlDeviceGetName(handle)
-        print(f'Decive: {index}, {gpu_name}, \
-                可用显存: {meminfo.free / 1024 ** 2}, \
-                已用显存: {meminfo.used / 1024 ** 2}, \
-                总显存: {meminfo.total / 1024 ** 2}')
+        # print(f'Decive: {index}, {gpu_name}, \
+        #         可用显存: {meminfo.free / 1024 ** 2}, \
+        #         已用显存: {meminfo.used / 1024 ** 2}, \
+        #         总显存: {meminfo.total / 1024 ** 2}')
         gpu_info["GPU_Name"] = gpu_name.decode()
         gpu_info["Free_Mem"] = meminfo.free / 1024 ** 2
         gpu_info["Used_Mem"] = meminfo.used / 1024 ** 2
