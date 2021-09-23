@@ -8,20 +8,25 @@
 """
 
 import pika
+import json
+import time
+import pickle
+
+from scapy.utils import wrpcap
 
 
 class MQ:
-    def __init__(self, m_host, m_port, m_user, m_password, m_queue, m_routing_key, m_exchange, m_r_exchange,
-                 m_r_queue):
+    def __init__(self, m_host, m_port, m_user, m_password, m_queue, m_routing_key, m_exchange, m_r_exchange="",
+                 m_r_queue=""):
         self.host = m_host
         self.port = m_port
         self.user = m_user
         self.password = m_password
         self.exchange = m_exchange
-        self.r_exchange = m_r_exchange
         self.queue = m_queue
-        self.r_queue = m_r_queue
         self.routing_key = m_routing_key
+        self.r_exchange = m_r_exchange
+        self.r_queue = m_r_queue
         self.is_connected = False
         self.obj = None
         try:
@@ -38,18 +43,12 @@ class MQ:
             exit(1)
 
     def callback(self, ch, method, properties, body):
-        print(f"From: {self.r_queue} Received: {body.decode()}")
-        self.send(b'{"rev":1}')
-
-        # data = json.loads(body)
-        # print(type(data), data)
-        # TODO   Save data/message to local file first or call Kitsune directly
+        print(f"From: {self.r_queue} Received: {body}")
 
     def send(self, m_body):
         if self.is_connected:
             print(f"Send to: {self.queue} Message : {m_body}")
-            self.channel.basic_publish(exchange=self.exchange, routing_key=self.routing_key,
-                                       body=m_body,
+            self.channel.basic_publish(exchange=self.exchange, routing_key=self.routing_key, body=m_body,
                                        properties=pika.BasicProperties(delivery_mode=2, ))
 
     def rece(self, rec_queue=None, m_obj=None):
@@ -60,3 +59,23 @@ class MQ:
         if self.is_connected and self.r_queue is not None:
             self.r_channel.basic_consume(queue=self.r_queue, on_message_callback=self.callback, auto_ack=True)
             self.r_channel.start_consuming()
+
+
+class Kit_MQ(MQ):
+    def __init__(self, m_host, m_port, m_user, m_password, m_queue, m_routing_key, m_exchange, m_r_exchange="",
+                 m_r_queue="", m_kit_obj=None):
+        super.__init__(m_host, m_port, m_user, m_password, m_queue, m_routing_key, m_exchange, m_r_exchange, m_r_queue)
+        self.kit_obj = m_kit_obj
+
+    def callback(self, ch, method, properties, body):
+        pkts = pickle.loads(body)
+        print(f"From: {self.r_queue} \nLength: {len(pkts)}")  # Summary: {pkts.summary()}")
+        # wrpcap(f"./{self.i}.pcap", pkts)
+        # self.i += 1
+        # data=Kitsune_main([]).pcap(pkts[0])
+        if self.kit_obj is not None:
+            data = self.kit_obj.pcap(pkts)
+            if data is not None:
+                print(f"\nData to Manager: {data}\n")
+                self.send(json.dumps(data))
+            # system("pause") # Test
